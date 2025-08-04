@@ -10693,7 +10693,7 @@ void CvDiplomacyAI::DoFirstContact(PlayerTypes ePlayer)
 							if(std::find(m_aGreetPlayers.begin(), m_aGreetPlayers.end(), ePlayer) == m_aGreetPlayers.end())
 							{
 								// Put in the list of people to greet when their turn comes up.
-								m_aGreetPlayers.push_back(ePlayer);
+								//m_aGreetPlayers.push_back(ePlayer);
 							}
 						}
 					}
