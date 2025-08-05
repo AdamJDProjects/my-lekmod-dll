@@ -1342,6 +1342,20 @@ local function PlotButtonClicked( plotIndex )
 	end
 end
 
+local function PlotButtonForceClicked( plotIndex )
+	local city = GetSelectedModifiableCity()
+	local plot = city and city:GetCityIndexPlot( plotIndex )
+	if plot then
+		local outside = city ~= plot:GetWorkingCity()
+		-- This is your new DLL task!
+		Network.SendDoTask( city:GetID(), TaskTypes.TASK_FORCE_WORKING_PLOT, plotIndex, -1, false )
+		Network.SendUpdateCityCitizens(city:GetID())
+		if outside then
+			Network.SendUpdateCityCitizens( city:GetID() )
+		end
+	end
+end
+
 local function BuyPlotAnchorButtonClicked( plotIndex )
 	local city = GetSelectedModifiableCity()
 	if city then
@@ -1471,9 +1485,11 @@ local function UpdateWorkingHexesNow()
 					local button = instance.PlotButtonImage
 					if not cityPlotIndex or g_isViewingMode then
 						button:ClearCallback( Mouse.eLCLick )
+						button:ClearCallback( Mouse.eRClick )
 					else
 						button:SetVoid1( cityPlotIndex )
 						button:RegisterCallback( Mouse.eLCLick, PlotButtonClicked )
+						button:RegisterCallback( Mouse.eRClick, PlotButtonForceClicked )
 					end
 				end
 			end
