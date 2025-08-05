@@ -124,10 +124,7 @@ function OnConnectionCompete()
 		UIManager:QueuePopup( Controls.StagingRoomScreen, PopupPriority.StagingScreen );
         UIManager:DequeuePopup( ContextPtr );
 	end
-
-    -- TOURNAMENT MOD:
-    Network.SendChat(Locale.ConvertTextKey("TXT_KEY_UI_CHECK_BAT"))
-
+    
 end
 
 -------------------------------------------------
@@ -154,6 +151,30 @@ function OnVersionMismatch( iPlayerID, playerName, bIsHost )
 end
 Events.PlayerVersionMismatchEvent.Add( OnVersionMismatch );
 
+-------------------------------------------------
+-- 
+-------------------------------------------------
+
+
+function checkLekmodMismatch(player_id)
+
+	local current_game_version = Matchmaking.GetCurrentGameName();
+	print("current_game_version: " .. current_game_version);
+	local lekmod_version = Locale.ConvertTextKey("TXT_KEY_LEKMOD_VERSION");
+	print("lekmod_version: " .. lekmod_version);
+	--if not host
+	if not Matchmaking.IsHost() then
+		-- check if the game name includes the lekmod version
+		if not string.find(current_game_version, lekmod_version) then
+			-- did not find the lekmod version in the game name, assume player does not have it, kick player
+			Events.FrontEndPopup.CallImmediate( Locale.ConvertTextKey( "TXT_KEY_MP_VERSION_MISMATCH_FOR_PLAYER" ) );
+			g_joinFailed = true;
+			Matchmaking.LeaveMultiplayerGame();
+			UIManager:DequeuePopup( ContextPtr );
+		end
+	end
+
+end
 -------------------------------------------------
 -- Show / Hide Handler
 -------------------------------------------------
@@ -192,6 +213,8 @@ function RegisterEvents()
     Events.MultiplayerNetRegistered.Add( OnNetRegistered );   
     Events.MultiplayerConnectionFailed.Add( OnMultiplayerConnectionFailed );
     Events.MultiplayerGameAbandoned.Add( OnMultiplayerGameAbandoned );
+
+	Events.MultiplayerJoinRoomComplete.Add( checkLekmodMismatch );
 end
 
 
@@ -205,6 +228,8 @@ function UnregisterEvents()
 		Events.MultiplayerNetRegistered.Remove( OnNetRegistered );   
     Events.MultiplayerConnectionFailed.Remove( OnMultiplayerConnectionFailed );
     Events.MultiplayerGameAbandoned.Remove( OnMultiplayerGameAbandoned );
+
+	Events.MultiplayerJoinRoomComplete.Remove( checkLekmodMismatch );
 end
 
 
