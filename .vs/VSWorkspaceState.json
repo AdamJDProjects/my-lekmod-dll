@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\LEKMOD_DLL",
+    "\\LEKMOD_DLL\\CvGameCoreDLL_Expansion2"
   ],
-  "SelectedNode": "\\CvGameCoreDLL_Expansion2_08.sln",
+  "SelectedNode": "\\LEKMOD_DLL\\CvGameCoreDLL_Expansion2\\CvGameCoreDLL_Expansion2.sln",
   "PreviewInSolutionExplorer": false
 }

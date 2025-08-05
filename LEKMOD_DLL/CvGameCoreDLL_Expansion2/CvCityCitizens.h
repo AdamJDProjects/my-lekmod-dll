@@ -116,6 +116,7 @@ public:
 	bool IsWorkingPlot(const CvPlot* pPlot) const;
 	void SetWorkingPlot(CvPlot* pPlot, bool bNewValue, bool bUseUnassignedPool = true);
 	void DoAlterWorkingPlot(int iIndex);
+	void DoForceWorkingPlot(int iIndex);
 
 	// Forced Working Plots (human override)
 	bool IsForcedWorkingPlot(const CvPlot* pPlot) const;

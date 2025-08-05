@@ -2467,6 +2467,64 @@ void CvCityCitizens::SetWorkingPlot(CvPlot* pPlot, bool bNewValue, bool bUseUnas
 	}
 }
 
+void CvCityCitizens::DoForceWorkingPlot(int iIndex) {
+	CvAssertMsg(iIndex >= 0, "iIndex expected to be >= 0");
+	CvAssertMsg(iIndex < NUM_CITY_PLOTS, "iIndex expected to be < NUM_CITY_PLOTS");
+
+	if (iIndex == CITY_HOME_PLOT)
+	{
+		// Cannot force-lock city center; do nothing
+		return;
+	}
+
+	CvPlot* pPlot = GetCityPlotFromIndex(iIndex);
+
+	if (pPlot != NULL)
+	{
+		if (IsCanWork(pPlot))
+		{
+			// If we're already working it, just set forced flag
+			if (IsWorkingPlot(pPlot))
+			{
+
+				SetForcedWorkingPlot(pPlot, true);
+			}
+			else
+			{
+				// Pull from Default Specialist pool if available
+				if (GetNumDefaultSpecialists() > 0)
+				{
+					ChangeNumDefaultSpecialists(-1);
+					if (GetNumForcedDefaultSpecialists() > 0)
+						ChangeNumForcedDefaultSpecialists(-1);
+
+					SetWorkingPlot(pPlot, true);
+					SetForcedWorkingPlot(pPlot, true);
+				}
+				else
+				{
+					// Remove a citizen from the worst plot/specialist to free up a slot
+					if (DoRemoveWorstCitizen(true))
+					{
+						SetWorkingPlot(pPlot, true);
+						SetForcedWorkingPlot(pPlot, true);
+					}
+					else
+					{
+						CvAssertMsg(false, "Couldn't find a citizen to reassign!");
+					}
+				}
+			}
+		}
+		// Else, plot can't be worked—do nothing
+	}
+#ifdef AUI_CITIZENS_MID_TURN_ASSIGN_RUNS_SELF_CONSISTENCY
+	DoSelfConsistencyCheck();
+#endif
+}
+
+
+
 /// Tell City to work a Plot, pulling a Citizen from the worst location we can
 void CvCityCitizens::DoAlterWorkingPlot(int iIndex)
 {

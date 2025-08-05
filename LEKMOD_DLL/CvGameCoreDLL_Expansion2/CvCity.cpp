@@ -2317,6 +2317,11 @@ CityTaskResult CvCity::doTask(TaskTypes eTask, int iData1, int iData2, bool bOpt
 		GetCityCitizens()->DoAlterWorkingPlot(/*CityPlotIndex*/ iData1);
 		break;
 
+	case TASK_FORCE_WORKING_PLOT:
+		GetCityCitizens()->DoForceWorkingPlot(/*CityPlotIndex*/ iData1);
+		break;
+
+
 	case TASK_REMOVE_SLACKER:
 		if (GetCityCitizens()->GetNumDefaultSpecialists() > 0)
 		{
