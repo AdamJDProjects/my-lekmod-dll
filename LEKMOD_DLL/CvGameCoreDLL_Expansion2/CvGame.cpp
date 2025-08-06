@@ -8250,12 +8250,79 @@ void CvGame::addGreatPersonBornName(const CvString& szName)
 	m_aszGreatPeopleBorn.push_back(szName);
 }
 
+void CvGame::RunRegionalScan() 
+{
+	std::map<PlayerTypes, ResourceTypes> mapCivRegionals; // Local variable; member variable if you want persistence
 
+	for (int iPlayer = 0; iPlayer < MAX_MAJOR_CIVS; ++iPlayer)
+	{
+		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iPlayer);
+		if (!kPlayer.isAlive()) continue;
+		CvPlot* pStartPlot = kPlayer.getStartingPlot();
+		if (!pStartPlot) continue;
+
+		std::map<ResourceTypes, int> luxuryCounts;
+
+		for (int iDX = -2; iDX <= 2; ++iDX)
+		{
+			for (int iDY = -2; iDY <= 2; ++iDY)
+			{
+				int iDistance = plotDistance(0, 0, iDX, iDY);
+				if (iDistance > 2) continue;
+
+				CvPlot* pPlot = ::plotXYWithRangeCheck(pStartPlot->getX(), pStartPlot->getY(), iDX, iDY, 2);
+				if (!pPlot) continue;
+
+				ResourceTypes eRes = pPlot->getResourceType();
+				if (eRes != NO_RESOURCE)
+				{
+					CvResourceInfo* pkInfo = GC.getResourceInfo(eRes);
+					if (pkInfo && pkInfo->getResourceClassType() == 1) // 1 = luxury
+					{
+						luxuryCounts[eRes]++;
+					}
+				}
+			}
+		}
+
+		// Find the most frequent luxury resource
+		ResourceTypes regionalRes = NO_RESOURCE;
+		int maxCount = 0;
+		for (std::map<ResourceTypes, int>::iterator it = luxuryCounts.begin(); it != luxuryCounts.end(); ++it)
+		{
+			if (it->second > maxCount)
+			{
+				regionalRes = it->first;
+				maxCount = it->second;
+			}
+		}
+
+		if (regionalRes != NO_RESOURCE)
+		{
+			mapCivRegionals[(PlayerTypes)iPlayer] = regionalRes;
+
+			CvString sMsg;
+			sMsg.Format("Player %d regional luxury: %s (count %d)", iPlayer, GC.getResourceInfo(regionalRes)->GetType(), maxCount);
+
+			// Send the message (no map location, will appear in replay log and notification)
+			addReplayMessage(REPLAY_MESSAGE_MAJOR_EVENT, (PlayerTypes)iPlayer, sMsg, -1, -1);
+		}
+		else
+		{
+			addReplayMessage(REPLAY_MESSAGE_MAJOR_EVENT, (PlayerTypes)iPlayer, "No regional luxury found!", -1, -1);
+		}
+	}
+}
 // Protected Functions...
 
 //	--------------------------------------------------------------------------------
 void CvGame::doTurn()
 {
+	if (getGameTurn() == 0)
+	{
+		RunRegionalScan();
+		
+	}
 #ifndef FINAL_RELEASE
 	char temp[256];
 	sprintf_s(temp, "Turn %i\n", getGameTurn());
