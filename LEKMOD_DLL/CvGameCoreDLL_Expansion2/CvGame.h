@@ -644,6 +644,30 @@ public:
 #endif
 	bool AnyoneHasBuildingClass(BuildingClassTypes iBuildingClassType) const;
 
+
+
+	std::map<PlayerTypes, ResourceTypes> mapCivRegionals;
+
+	const std::map<PlayerTypes, ResourceTypes>& GetCivRegionals() const { return mapCivRegionals; }
+
+	ResourceTypes GetCivRegionalLuxury(PlayerTypes ePlayer) const {
+		std::map<PlayerTypes, ResourceTypes>::const_iterator it = mapCivRegionals.find(ePlayer);
+		return (it != mapCivRegionals.end()) ? it->second : NO_RESOURCE;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public:
 
 	//Function to determine city size from city population
