@@ -8263,15 +8263,15 @@ void CvGame::RunRegionalScan()
 
 		std::map<ResourceTypes, int> luxuryCounts;
 
-		for (int iDX = -2; iDX <= 2; ++iDX)
+		for (int iDX = -3; iDX <= 3; ++iDX)
 		{
-			for (int iDY = -2; iDY <= 2; ++iDY)
+			for (int iDY = -3; iDY <= 3; ++iDY)
 			{
-				int iDistance = plotDistance(0, 0, iDX, iDY);
-				if (iDistance > 2) continue;
-
-				CvPlot* pPlot = ::plotXYWithRangeCheck(pStartPlot->getX(), pStartPlot->getY(), iDX, iDY, 2);
+				CvPlot* pPlot = ::plotXYWithRangeCheck(pStartPlot->getX(), pStartPlot->getY(), iDX, iDY, 3);
 				if (!pPlot) continue;
+
+				int iDistance = plotDistance(pStartPlot->getX(), pStartPlot->getY(), pPlot->getX(), pPlot->getY());
+				if (iDistance == 0 || iDistance > 3) continue; // 1, 2, or 3 tiles away only
 
 				ResourceTypes eRes = pPlot->getResourceType();
 				if (eRes != NO_RESOURCE)
