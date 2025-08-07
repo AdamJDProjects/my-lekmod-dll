@@ -8297,20 +8297,6 @@ void CvGame::RunRegionalScan()
 			}
 		}
 
-		if (regionalRes != NO_RESOURCE)
-		{
-			mapCivRegionals[(PlayerTypes)iPlayer] = regionalRes;
-
-			CvString sMsg;
-			sMsg.Format("Player %d regional luxury: %s (count %d)", iPlayer, GC.getResourceInfo(regionalRes)->GetType(), maxCount);
-
-			// Send the message (no map location, will appear in replay log and notification)
-			addReplayMessage(REPLAY_MESSAGE_MAJOR_EVENT, (PlayerTypes)iPlayer, sMsg, -1, -1);
-		}
-		else
-		{
-			addReplayMessage(REPLAY_MESSAGE_MAJOR_EVENT, (PlayerTypes)iPlayer, "No regional luxury found!", -1, -1);
-		}
 	}
 }
 // Protected Functions...
