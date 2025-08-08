@@ -8252,7 +8252,7 @@ void CvGame::addGreatPersonBornName(const CvString& szName)
 
 void CvGame::RunRegionalScan() 
 {
-	std::map<PlayerTypes, ResourceTypes> mapCivRegionals; // Local variable; member variable if you want persistence
+	mapCivRegionals.clear();
 
 	for (int iPlayer = 0; iPlayer < MAX_MAJOR_CIVS; ++iPlayer)
 	{
@@ -8297,6 +8297,7 @@ void CvGame::RunRegionalScan()
 			}
 		}
 
+		mapCivRegionals[(PlayerTypes)iPlayer] = regionalRes;
 	}
 }
 // Protected Functions...

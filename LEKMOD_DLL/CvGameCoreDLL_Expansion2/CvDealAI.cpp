@@ -521,9 +521,64 @@ bool CvDealAI::IsDealWithHumanAcceptable(CvDeal* pDeal, PlayerTypes eOtherPlayer
 	// Deal leeway with human
 	iPercentOverWeWillRequest = GetDealPercentLeewayWithHuman();
 	iPercentUnderWeWillOffer = 0;
+	const PlayerTypes eMyPlayer = GetPlayer()->GetID();
+	bool bMyRegionalGiven = false;
+	bool bTheirRegionalGiven = false;
 
+	std::map<PlayerTypes, ResourceTypes>::const_iterator itReg;
+
+	// Scan all items in the deal
+	TradedItemList::iterator it;
+	for (it = pDeal->m_TradedItems.begin(); it != pDeal->m_TradedItems.end(); ++it)
+	{
+		if (it->m_eItemType != TRADE_ITEM_RESOURCES)
+			continue;
+
+		const PlayerTypes eGiver = it->m_eFromPlayer;
+		const ResourceTypes eRes = (ResourceTypes)it->m_iData1;
+
+		// What is that giver's regional luxury?
+		ResourceTypes eGiverRegional = GC.getGame().GetCivRegionalLuxury(eGiver);
+		if (eGiverRegional == NO_RESOURCE)
+			continue;
+
+		if (eRes == eGiverRegional)
+		{
+			if (eGiver == eMyPlayer)
+				bMyRegionalGiven = true;
+			else if (eGiver == eOtherPlayer)
+				bTheirRegionalGiven = true;
+		}
+	}
+
+	// If AI is giving its regional but human isn't giving theirs, reject outright
+	if ((bMyRegionalGiven && !bTheirRegionalGiven) || (!bMyRegionalGiven && bTheirRegionalGiven))
+		return false;
+	// or shorter:
+	if (bMyRegionalGiven != bTheirRegionalGiven)
+		return false;
 	// Now do the valuation
 	iTotalValueToMe = GetDealValue(pDeal, iValueImOffering, iValueTheyreOffering, /*bUseEvenValue*/ false);
+
+
+	//Check if deal is at least equal or better from Ai's perspective
+
+	if (iTotalValueToMe >= 0) 
+	{
+		return true;
+	}
+	else {
+		return false;
+	}
+
+
+
+
+
+
+
+
+
 
 	// If no Gold in deal and within value of 1 GPT, then it's close enough
 	if (pDeal->GetGoldTrade(eOtherPlayer) == 0 && pDeal->GetGoldTrade(m_pPlayer->GetID()) == 0)
@@ -1193,32 +1248,50 @@ int CvDealAI::GetResourceValue(ResourceTypes eResource, int iResourceQuantity, i
 		return 0;
 
 	ResourceUsageTypes eUsage = pkResourceInfo->getResourceUsage();
+	
 
+	const CvResourceInfo* pkInfoRes = GC.getResourceInfo(eResource);
+	LOGFILEMGR.GetLog("DealDebug.csv", FILogFile::kDontTimeStamp)
+		->Msg(CvString::format("ResourceName=%s", pkInfoRes ? pkInfoRes->GetType() : "UNKNOWN"));
 	// Luxury Resource
-	if(eUsage == RESOURCEUSAGE_LUXURY)
+	if (eUsage == RESOURCEUSAGE_LUXURY)
 	{
-		if (GC.getGame().GetGameLeagues()->IsLuxuryHappinessBanned(GetPlayer()->GetID(), eResource))
+		// Identify the player who is giving the resource
+		PlayerTypes eGiver = bFromMe ? GetPlayer()->GetID() : eOtherPlayer;
+
+		// Get that player's regional luxury
+		ResourceTypes eRegional = GC.getGame().GetCivRegionalLuxury(eGiver);
+		const CvResourceInfo* pkInfoReg = GC.getResourceInfo(eRegional);
+		LOGFILEMGR.GetLog("DealDebug.csv", FILogFile::kDontTimeStamp)
+			->Msg(CvString::format("RegionalName=%s", pkInfoReg ? pkInfoReg->GetType() : "UNKNOWN"));
+		// Check if the resource being traded is their personal regional
+		if (eResource == eRegional)
 		{
-			iItemValue = 0;
+			// Regional luxury: huge value
+			iItemValue = 999999;
+			LOGFILEMGR.GetLog("DealDebug.csv", FILogFile::kDontTimeStamp)
+				->Msg("Regional");
+			return iItemValue; // Skip all other calculations
 		}
 		else
 		{
-			int iHappinessFromResource = pkResourceInfo->getHappiness();
-			iItemValue += (iResourceQuantity * iHappinessFromResource * iNumTurns * 2);	// Ex: 1 Silk for 4 Happiness * 30 turns * 2 = 240
+			LOGFILEMGR.GetLog("DealDebug.csv", FILogFile::kDontTimeStamp)
+				->Msg("Non-Regional");
+			// Non-regional luxury
+			iItemValue = 55555;
 
-			// If we only have 1 of a Luxury then we value it much more
-			if(bFromMe)
+			// If giver is an AI (not human) add 3 GPT worth of value
+			if (!GET_PLAYER(eGiver).isHuman())
 			{
-				if(GetPlayer()->getNumResourceAvailable(eResource) == 1)
-				{
-					iItemValue *= 3;
-					if(GetPlayer()->GetPlayerTraits()->GetLuxuryHappinessRetention() > 0)
-					{
-						iItemValue /= 2;
-					}
-				}
+				int iThreeGPTValue = GetGPTforForValueExchange(3, false, /*iDuration*/ iNumTurns,
+					bFromMe, eOtherPlayer, false, false);
+				iItemValue += iThreeGPTValue;
 			}
+
+			return iItemValue; // Skip all other calculations
 		}
+
+		// (Existing luxury valuation code won't run, because we return early above)
 	}
 	// Strategic Resource
 	else if(eUsage == RESOURCEUSAGE_STRATEGIC)
