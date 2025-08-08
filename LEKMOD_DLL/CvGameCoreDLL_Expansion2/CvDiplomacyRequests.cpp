@@ -259,6 +259,7 @@ void CvDiplomacyRequests::SendDealRequest(PlayerTypes eFromPlayer, PlayerTypes e
 //	static
 void CvDiplomacyRequests::DoAIDiplomacy(PlayerTypes eTargetPlayer)
 {
+	return;
 	if(eTargetPlayer != NO_PLAYER)
 	{
 		ICvUserInterface2* pkIFace = GC.GetEngineUserInterface();
