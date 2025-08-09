@@ -21197,11 +21197,14 @@ bool CvUnit::CanSwapWithUnitHere(CvPlot& swapPlot) const
 										{
 											CvPlot* pPathEndTurnPlot = kPathfinder.GetPathEndTurnPlot();
 #else
-										if(pLoopUnit->ReadyToMove() && GC.getIgnoreUnitsPathFinder().DoesPathExist(*(pLoopUnit), &swapPlot, plot()))
+										ActivityTypes eActivity = pLoopUnit->GetActivityType();
+										bool bFortified = (eActivity == ACTIVITY_SENTRY) || (eActivity == ACTIVITY_SLEEP);
+										LOGFILEMGR.GetLog("DealDebug.csv", FILogFile::kDontTimeStamp)
+											->Msg(CvString::format("Activity: %d", (int)eActivity).c_str());
+										if (!bFortified && GC.getIgnoreUnitsPathFinder().DoesPathExist(*pLoopUnit, &swapPlot, plot()))
 										{
 											CvPlot* pPathEndTurnPlot = GC.getIgnoreUnitsPathFinder().GetPathEndTurnPlot();
-#endif
-											if(pPathEndTurnPlot == plot())
+											if (pPathEndTurnPlot == plot())
 #ifdef AUI_ASTAR_MINOR_OPTIMIZATION
 												return true;
 #else
@@ -21211,6 +21214,22 @@ bool CvUnit::CanSwapWithUnitHere(CvPlot& swapPlot) const
 											}
 #endif
 										}
+
+										//if(pLoopUnit->ReadyToMove() && GC.getIgnoreUnitsPathFinder().DoesPathExist(*(pLoopUnit), &swapPlot, plot()))
+										//{
+											//CvPlot* pPathEndTurnPlot = GC.getIgnoreUnitsPathFinder().GetPathEndTurnPlot();
+#endif
+											//if(pPathEndTurnPlot == plot())
+#ifdef AUI_ASTAR_MINOR_OPTIMIZATION
+												//return true;
+#else
+											//{
+												//bSwapPossible = true;
+												//break;
+											//}
+#endif
+										//}
+
 									}
 								}
 							}
