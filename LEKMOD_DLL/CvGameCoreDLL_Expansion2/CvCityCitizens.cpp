@@ -2467,61 +2467,88 @@ void CvCityCitizens::SetWorkingPlot(CvPlot* pPlot, bool bNewValue, bool bUseUnas
 	}
 }
 
-void CvCityCitizens::DoForceWorkingPlot(int iIndex) {
+void CvCityCitizens::DoForceWorkingPlot(int iIndex)
+{
 	CvAssertMsg(iIndex >= 0, "iIndex expected to be >= 0");
 	CvAssertMsg(iIndex < NUM_CITY_PLOTS, "iIndex expected to be < NUM_CITY_PLOTS");
 
 	if (iIndex == CITY_HOME_PLOT)
-	{
-		// Cannot force-lock city center; do nothing
-		return;
-	}
+		return; // cannot force-lock city center
 
 	CvPlot* pPlot = GetCityPlotFromIndex(iIndex);
+	if (!pPlot)
+		return;
 
-	if (pPlot != NULL)
+	if (IsCanWork(pPlot))
 	{
-		if (IsCanWork(pPlot))
+		// Already working: just flag as forced
+		if (IsWorkingPlot(pPlot))
 		{
-			// If we're already working it, just set forced flag
-			if (IsWorkingPlot(pPlot))
+			SetForcedWorkingPlot(pPlot, true);
+		}
+		else
+		{
+			// Prefer pulling from default specialists
+			if (GetNumDefaultSpecialists() > 0)
 			{
+				ChangeNumDefaultSpecialists(-1);
+				if (GetNumForcedDefaultSpecialists() > 0)
+					ChangeNumForcedDefaultSpecialists(-1);
 
+				SetWorkingPlot(pPlot, true);
 				SetForcedWorkingPlot(pPlot, true);
 			}
 			else
 			{
-				// Pull from Default Specialist pool if available
-				if (GetNumDefaultSpecialists() > 0)
+				// Free a citizen from worst plot/specialist
+				if (DoRemoveWorstCitizen(true))
 				{
-					ChangeNumDefaultSpecialists(-1);
-					if (GetNumForcedDefaultSpecialists() > 0)
-						ChangeNumForcedDefaultSpecialists(-1);
-
 					SetWorkingPlot(pPlot, true);
 					SetForcedWorkingPlot(pPlot, true);
 				}
 				else
 				{
-					// Remove a citizen from the worst plot/specialist to free up a slot
-					if (DoRemoveWorstCitizen(true))
-					{
-						SetWorkingPlot(pPlot, true);
-						SetForcedWorkingPlot(pPlot, true);
-					}
-					else
-					{
-						CvAssertMsg(false, "Couldn't find a citizen to reassign!");
-					}
+					CvAssertMsg(false, "Couldn't find a citizen to reassign!");
 				}
 			}
 		}
-		// Else, plot can't be worked—do nothing
 	}
+	else
+	{
+		// Mirror DoAlterWorkingPlot: if we own the tile but another of our cities is its override, take it
+#ifdef AUI_CITIZENS_FIX_LOCKED_TILES_BLOCKED
+		if ((pPlot->getOwner() == GetOwner()) && pPlot->getWorkingCityOverride() != GetCity())
+#else
+		if (pPlot->getOwner() == GetOwner())
+#endif
+		{
+#ifdef AUI_CITIZENS_MID_TURN_ASSIGN_RUNS_SELF_CONSISTENCY
+			CvCity* pOldWorkingCityOverride = pPlot->getWorkingCityOverride();
+			if (pOldWorkingCityOverride != NULL)
+			{
+				if (pOldWorkingCityOverride->IsPuppet())
+					return;
+#else
+			if (pPlot->getWorkingCityOverride() != NULL)
+			{
+				if (pPlot->getWorkingCityOverride()->IsPuppet())
+					return;
+#endif
+			}
+
+			pPlot->setWorkingCityOverride(GetCity());
+
+#ifdef AUI_CITIZENS_MID_TURN_ASSIGN_RUNS_SELF_CONSISTENCY
+			if (pOldWorkingCityOverride)
+				pOldWorkingCityOverride->GetCityCitizens()->DoSelfConsistencyCheck();
+#endif
+			}
+		}
+
 #ifdef AUI_CITIZENS_MID_TURN_ASSIGN_RUNS_SELF_CONSISTENCY
 	DoSelfConsistencyCheck();
 #endif
-}
+	}
 
 
 

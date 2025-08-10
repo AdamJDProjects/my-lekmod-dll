@@ -1349,9 +1349,8 @@ local function PlotButtonForceClicked( plotIndex )
 		local outside = city ~= plot:GetWorkingCity()
 		-- This is your new DLL task!
 		Network.SendDoTask( city:GetID(), TaskTypes.TASK_FORCE_WORKING_PLOT, plotIndex, -1, false )
-		Network.SendUpdateCityCitizens(city:GetID())
 		if outside then
-			Network.SendUpdateCityCitizens( city:GetID() )
+			return Network.SendUpdateCityCitizens( city:GetID() )
 		end
 	end
 end
